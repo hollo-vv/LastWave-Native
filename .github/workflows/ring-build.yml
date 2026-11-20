@@ -1,0 +1,25 @@
+name: Build LastWave with ring visualizer
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Add the ring visualizer
+        run: git apply ring/lastwave-ring.patch
+      - name: Install next to the normal LastWave (different app id)
+        run: sed -i 's/^\(\s*\)isDebuggable = true/\1isDebuggable = true\n\1applicationIdSuffix = ".ring"/' app/build.gradle.kts
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LastWave-ring-APK
+          path: app/build/outputs/apk/debug/*.apk
